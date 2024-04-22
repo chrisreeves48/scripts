@@ -9,7 +9,7 @@ fi
 
 if [ "$AWS_VAULT" != "bridge" ]; then
   echo "Error: Run with aws-vault exec bridge!"
-  exit 1
+exit 1
 fi
 
 echo "Choose an Truss Environment:"
