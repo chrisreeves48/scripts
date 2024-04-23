@@ -7,8 +7,8 @@ if ! type gum &> /dev/null; then
   exit 1
 fi
 
-if [ "$AWS_VAULT" != "bridge-shared" ]; then
-  echo "Error: Run with aws-vault exec bridge-shared!"
+if [ "$AWS_VAULT" != "" ]; then
+  echo "Error: Run without aws-vault!"
   exit 1
 fi
 
@@ -18,7 +18,7 @@ echo "> $region"
 export AWS_REGION=$region
 
 # Load Clusters
-clusters=$(set -x ; gum spin --show-output -- aws rds describe-db-clusters)
+clusters=$(set -x ; gum spin --show-output -- aws-vault exec bridge-shared -- aws rds describe-db-clusters)
 clusternames=($(echo $clusters | jq -r '.DBClusters[].DBClusterIdentifier'))
 
 # Select Cluster
@@ -37,8 +37,8 @@ gum confirm "Would you like to take a snapshot of: $clustername?"
 snapshotIdentifier="$clustername-$(date "+%Y-%m-%d-%H%M%S")-upgrade"
 echo "DBSnapshotIdentifier: $snapshotIdentifier"
 echo
-(set -x ; gum spin -- aws rds create-db-cluster-snapshot --db-cluster-snapshot-identifier $snapshotIdentifier --db-cluster-identifier $clustername)
+(set -x ; gum spin -- aws-vault exec bridge-shared -- aws rds create-db-cluster-snapshot --db-cluster-snapshot-identifier $snapshotIdentifier --db-cluster-identifier $clustername)
 gum confirm "Have you included the Snapshot Identifier in your Terraform yet? $snapshotIdentifier"
-(set -x ; gum spin -- aws rds wait db-cluster-snapshot-available --db-cluster-snapshot-identifier $snapshotIdentifier)
+(set -x ; gum spin -- aws-vault exec bridge-shared -- aws rds wait db-cluster-snapshot-available --db-cluster-snapshot-identifier $snapshotIdentifier)
 echo
 echo "Snapshot Complete: $snapshotIdentifier"

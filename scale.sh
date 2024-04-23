@@ -7,9 +7,9 @@ if ! type gum &> /dev/null; then
   exit 1
 fi
 
-if [ "$AWS_VAULT" != "bridge" ]; then
-  echo "Error: Run with aws-vault exec bridge!"
-exit 1
+if [ "$AWS_VAULT" != "" ]; then
+  echo "Error: Run without aws-vault!"
+  exit 1
 fi
 
 echo "Choose an Truss Environment:"
@@ -36,7 +36,7 @@ appNamespace=$(gum choose \
 echo "> $appNamespace"
 echo
 
-deployments=$(set -x; gum spin --show-output -- kubectl -n $appNamespace get deployment -o json)
+deployments=$(set -x; gum spin --show-output -- aws-vault exec bridge -- kubectl -n $appNamespace get deployment -o json)
 echo "Found Deployments:"
 echo $deployments | jq -r '.items[] | .metadata.name + ": " + (.spec.replicas | tostring)'
 echo
@@ -45,6 +45,6 @@ desiredReplicas=$(gum input --value=0)
 echo "> $desiredReplicas"
 
 gum confirm "Scale all deployments to $desiredReplicas?"
-(set -x; gum spin -- kubectl -n $appNamespace scale deployment --all --replicas=$desiredReplicas)
+(set -x; gum spin -- aws-vault exec bridge -- kubectl -n $appNamespace scale deployment --all --replicas=$desiredReplicas)
 echo
 echo "All done! 🧙"
